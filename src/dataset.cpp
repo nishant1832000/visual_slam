@@ -49,7 +49,6 @@ bool Dataset::Init() {
 
 Frame::Ptr Dataset::NextFrame() {
     cv::Mat image_left, image_right;
-    LOG(INFO) << "going to get image from dataset";
     std::string left_path =
         (boost::format("%s/image_%d/%06d.png")
          % dataset_path_ % 0 % current_image_index_).str();

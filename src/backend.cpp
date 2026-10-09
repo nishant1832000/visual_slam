@@ -4,6 +4,7 @@
 #include "orb_slam/g2o_types.h"
 #include "orb_slam/map.h"
 #include "orb_slam/mappoint.h"
+#include "orb_slam/config.h"
 
 namespace orb_slam{
 
@@ -55,6 +56,8 @@ void Backend::Optimize(Map::KeyframesType &keyframes,
 
     // Keyframe id
     std::map<unsigned long, VertexPose *> vertices;
+    std::deque< VertexPose *> pose_deque;
+    
     unsigned long max_kf_id = 0;
     for (auto &keyframe : keyframes) {
         auto kf = keyframe.second;
@@ -65,8 +68,39 @@ void Backend::Optimize(Map::KeyframesType &keyframes,
         if (kf->keyframe_id_ > max_kf_id) {
             max_kf_id = kf->keyframe_id_;
         }
-
         vertices.insert({kf->keyframe_id_, vertex_pose});
+
+        if (pose_deque.size() == 2)
+        {
+            pose_deque.pop_front();
+        }
+        pose_deque.push_back(vertex_pose);
+
+        if (pose_deque.size() == 2)
+        {
+            auto *v0 = pose_deque[0];
+            auto *v1 = pose_deque[1];
+
+            auto *edge = new PoseGraphEdge();
+
+            edge->setVertex(0, v0);
+            edge->setVertex(1, v1);
+
+            // Expected relative vertical displacement
+            edge->setMeasurement(0.0);
+
+            Eigen::Matrix<double, 1, 1> information;
+            information << 150.0;
+
+            edge->setInformation(information);
+            double robust_delta = 8.19;
+            auto rk = new g2o::RobustKernelHuber();
+            rk->setDelta(robust_delta);
+            edge->setRobustKernel(rk);
+
+            optimizer.addEdge(edge);
+        }
+
     }
 
     
@@ -78,19 +112,36 @@ void Backend::Optimize(Map::KeyframesType &keyframes,
 
     // edges
     int index = 1;
-    double chi2_th = 5.991;  
+    double chi2_th = 8.19;  
     std::map<EdgeProjection *, Feature::Ptr> edges_and_features;
 
     for (auto &landmark : landmarks) {
         if (landmark.second->is_outlier_) continue;
         unsigned long landmark_id = landmark.second->id_;
         auto observations = landmark.second->GetObs();
+        // Get the landmark position in world coordinates
+        Eigen::Vector3d P_w = landmark.second->Pos();
         for (auto &obs : observations) {
             if (obs.lock() == nullptr) continue;
             auto feat = obs.lock();
             if (feat->is_outlier_ || feat->frame_.lock() == nullptr) continue;
-
+            SE3 T_c_b = feat->is_on_left_image_ ? left_ext : right_ext;
             auto frame = feat->frame_.lock();
+            SE3 T_c_w = T_c_b * frame->Pose();
+            Eigen::Vector3d P_c = T_c_w * P_w;
+            double depth = P_c.z();
+
+            // if (depth <= 0.1) {
+            //     continue;
+            // }
+
+            double reference_depth = Config::Get<double>("reference_depth");
+            double information_weight =
+                (reference_depth * reference_depth) / (depth * depth);
+
+            information_weight = std::clamp(information_weight, Config::Get<double>("lower_information_value"), Config::Get<double>("upper_information_value"));
+            Mat22 information_matrix =
+                    information_weight * Mat22::Identity();    
             EdgeProjection *edge = nullptr;
             if (feat->is_on_left_image_) {
                 edge = new EdgeProjection(K, left_ext);
@@ -117,9 +168,10 @@ void Backend::Optimize(Map::KeyframesType &keyframes,
                     edge->setVertex(0, vertices.at(frame->keyframe_id_));    // pose
                     edge->setVertex(1, vertices_landmarks.at(landmark_id));  // landmark
                     edge->setMeasurement(toVec2(feat->position_.pt));
-                    edge->setInformation(Mat22::Identity());
+                    edge->setInformation(information_matrix);
+                    double robust_delta = chi2_th;
                     auto rk = new g2o::RobustKernelHuber();
-                    rk->setDelta(chi2_th);
+                    rk->setDelta(robust_delta);
                     edge->setRobustKernel(rk);
                     edges_and_features.insert({edge, feat});
                     optimizer.addEdge(edge);

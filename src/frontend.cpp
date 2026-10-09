@@ -27,6 +27,8 @@ bool Frontend::AddFrame(orb_slam::Frame::Ptr frame) {
             StereoInit();
             break;
         case FrontendStatus::TRACKING_GOOD:
+            Track();
+            break;
         case FrontendStatus::TRACKING_BAD:
             Track();
             break;

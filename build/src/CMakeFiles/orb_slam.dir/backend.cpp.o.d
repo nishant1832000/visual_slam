@@ -614,4 +614,5 @@ src/CMakeFiles/orb_slam.dir/backend.cpp.o: \
  /usr/local/include/g2o/solvers/csparse/g2o_csparse_api.h \
  /usr/local/include/g2o/core/batch_stats.h \
  /usr/local/include/g2o/core/linear_solver.h \
- /usr/local/include/g2o/solvers/dense/linear_solver_dense.h
+ /usr/local/include/g2o/solvers/dense/linear_solver_dense.h \
+ /home/nishant/orb_slam_practice/include/orb_slam/config.h

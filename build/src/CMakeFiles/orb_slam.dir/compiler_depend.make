@@ -718,7 +718,8 @@ src/CMakeFiles/orb_slam.dir/backend.cpp.o: ../src/backend.cpp \
   /usr/local/include/g2o/solvers/csparse/g2o_csparse_api.h \
   /usr/local/include/g2o/core/batch_stats.h \
   /usr/local/include/g2o/core/linear_solver.h \
-  /usr/local/include/g2o/solvers/dense/linear_solver_dense.h
+  /usr/local/include/g2o/solvers/dense/linear_solver_dense.h \
+  ../include/orb_slam/config.h
 
 src/CMakeFiles/orb_slam.dir/camera.cpp.o: ../src/camera.cpp \
   /usr/include/stdc-predef.h \
@@ -7743,11 +7744,11 @@ src/CMakeFiles/orb_slam.dir/visual_odometry.cpp.o: ../src/visual_odometry.cpp \
 
 ../include/orb_slam/dataset.h:
 
+../src/camera.cpp:
+
 /usr/local/include/pangolin/plot/plotter.h:
 
 ../include/orb_slam/config.h:
-
-../src/camera.cpp:
 
 /usr/local/include/g2o/solvers/dense/linear_solver_dense.h:
 

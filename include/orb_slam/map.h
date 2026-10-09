@@ -54,7 +54,7 @@ private:
     Frame::Ptr current_frame_ = nullptr;
 
     //setting for active keyframe
-    int num_active_keyframes_ = 7;
+    int num_active_keyframes_ = 10;
     
 };    
 

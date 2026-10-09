@@ -9,6 +9,10 @@ camera.fy: 516.5
 camera.cx: 325.1
 camera.cy: 249.7
 
-num_features: 100
-num_features_init: 50
+num_features: 250
+num_features_init: 90
 num_features_tracking: 50
+
+reference_depth: 30.0
+upper_information_value: 50.0
+lower_information_value: 2.0
